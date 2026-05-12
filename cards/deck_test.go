@@ -21,20 +21,6 @@ func captureStdout(f func()) string {
 	return buf.String()
 }
 
-func captureStderr(f func()) string {
-	old := os.Stderr
-	r, w, _ := os.Pipe()
-	os.Stderr = w
-
-	f()
-
-	_ = w.Close()
-	var buf bytes.Buffer
-	_, _ = io.Copy(&buf, r)
-	os.Stderr = old
-	return buf.String()
-}
-
 func TestNewDeck(t *testing.T) {
 	d := newDeck()
 	if len(d) != 52 {
@@ -54,7 +40,7 @@ func TestSaveToFileAndNewDeckFromFile(t *testing.T) {
 	deck := newDeck()
 	deck.saveToFile(filename)
 
-	loadedDeck := newDeckFromFile(filename)
+	loadedDeck := newDeckFromFile(os.Exit, filename)
 	if len(loadedDeck) != 52 {
 		t.Errorf("Expected deck length of 52, but got %v", len(loadedDeck))
 	}
@@ -119,11 +105,12 @@ func TestPrint(t *testing.T) {
 }
 
 func TestNewDeckFromFileWithNonExistentFile(t *testing.T) {
+	noExit := func(code int) {}
 	filename := "non_existent_file"
 	_ = os.Remove(filename)
 
-	output := captureStderr(func() {
-		newDeckFromFile(filename)
+	output := captureStdout(func() {
+		newDeckFromFile(noExit, filename)
 	})
 
 	expectedOutput := "Error: open non_existent_file: no such file or directory\n"

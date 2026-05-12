@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+type exiter func(code int)
 type deck []string
 
 func newDeck() deck {
@@ -22,11 +23,11 @@ func newDeck() deck {
 	return cards
 }
 
-func newDeckFromFile(filename string) deck {
+func newDeckFromFile(e exiter, filename string) deck {
 	bs, err := os.ReadFile(filename)
 	if err != nil {
 		fmt.Println("Error:", err)
-		os.Exit(1)
+		e(1)
 	}
 	return deck(strings.Split(string(bs), ","))
 }
