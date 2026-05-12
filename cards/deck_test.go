@@ -21,6 +21,20 @@ func captureStdout(f func()) string {
 	return buf.String()
 }
 
+func captureStderr(f func()) string {
+	old := os.Stderr
+	r, w, _ := os.Pipe()
+	os.Stderr = w
+
+	f()
+
+	_ = w.Close()
+	var buf bytes.Buffer
+	_, _ = io.Copy(&buf, r)
+	os.Stderr = old
+	return buf.String()
+}
+
 func TestNewDeck(t *testing.T) {
 	d := newDeck()
 	if len(d) != 52 {
@@ -108,7 +122,7 @@ func TestNewDeckFromFileWithNonExistentFile(t *testing.T) {
 	filename := "non_existent_file"
 	_ = os.Remove(filename)
 
-	output := captureStdout(func() {
+	output := captureStderr(func() {
 		newDeckFromFile(filename)
 	})
 
